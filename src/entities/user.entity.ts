@@ -1,10 +1,10 @@
-// src/entities/user.entity.ts
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Entity, PrimaryColumn, Column, BeforeInsert } from 'typeorm';
+import { v7 as uuidv7 } from 'uuid';
 
 @Entity()
 export class User {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryColumn('uuid')
+  id: string;
 
   @Column()
   name: string;
@@ -14,4 +14,11 @@ export class User {
 
   @Column()
   password: string;
+
+  @BeforeInsert()
+  generateId() {
+    if (!this.id) {
+      this.id = uuidv7();
+    }
+  }
 }
