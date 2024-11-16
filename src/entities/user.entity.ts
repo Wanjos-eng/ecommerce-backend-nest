@@ -1,5 +1,6 @@
 import { Entity, PrimaryColumn, Column, BeforeInsert } from 'typeorm';
 import { v7 as uuidv7 } from 'uuid';
+import { UserRole } from '../user/user.dto';
 
 @Entity()
 export class User {
@@ -14,6 +15,10 @@ export class User {
 
   @Column()
   password: string;
+
+  // Novo campo para definir o papel do usuário
+  @Column({ type: 'enum', enum: UserRole, default: UserRole.CUSTOMER })
+  role: UserRole;
 
   @BeforeInsert()
   generateId() {
