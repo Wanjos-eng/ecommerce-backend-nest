@@ -6,6 +6,7 @@ import { User } from './entities/user.entity';
 import { CreateUserDto, UpdateUserDto } from './dto/user.dto';
 import { LoginDto } from '../auth/dto/login.dto';
 import { JwtService } from '@nestjs/jwt';
+import { UserRole } from './dto/user.dto';
 
 @Injectable()
 export class UserService {
@@ -34,20 +35,23 @@ export class UserService {
   async createOAuthUser(userData: any): Promise<User> {
     const { name, email, provider, providerId } = userData;
 
-    const existingUser = await this.findByEmail(email);
-    if (existingUser) {
-      // Opcional: Você pode vincular o provedor ao usuário existente ou lançar uma exceção
-      throw new HttpException('Email is already in use', HttpStatus.CONFLICT);
+    // Verificar se o usuário já existe pelo email
+    let existingUser = await this.findByEmail(email);
+
+    // Se o usuário não existir, criar um novo usuário
+    if (!existingUser) {
+      existingUser = this.userRepository.create({
+        name,
+        email,
+        provider,
+        providerId,
+        role: UserRole.CUSTOMER, // Utilizando o enum UserRole
+        password: null, // Não há senha para o OAuth
+      });
+      await this.userRepository.save(existingUser);
     }
 
-    const user = this.userRepository.create({
-      name,
-      email,
-      provider,
-      providerId,
-      role: 'user',
-    });
-    return await this.userRepository.save(user);
+    return existingUser;
   }
 
   // Método de login
@@ -93,7 +97,7 @@ export class UserService {
       password: hashedPassword,
       provider: null,
       providerId: null,
-      role: 'user',
+      role: UserRole.CUSTOMER, // Atribuindo role corretamente
     });
     return await this.userRepository.save(user);
   }

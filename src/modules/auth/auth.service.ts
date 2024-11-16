@@ -46,7 +46,8 @@ export class AuthService {
         email,
         provider,
         providerId,
-        role: UserRole.CUSTOMER, // Correção aqui
+        role: UserRole.CUSTOMER,
+        password: '',
       });
     }
 
