@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  ConflictException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UserService } from '../user/user.service';
 import { LoginDto } from './dto/login.dto';
@@ -47,8 +51,30 @@ export class AuthService {
   }
 
   // Método de registro (cadastro) de usuário
-  async register(createUserDto: CreateUserDto): Promise<{ message: string }> {
-    await this.userService.createUser(createUserDto);
-    return { message: 'User registered successfully' };
+  async register(
+    createUserDto: CreateUserDto,
+  ): Promise<{ id: string; accessToken: string }> {
+    const { email, password } = createUserDto;
+
+    // Check if the user already exists
+    const existingUser = await this.userService.findByEmail(email);
+    if (existingUser) {
+      throw new ConflictException('User with this email already exists.');
+    }
+
+    // Hash the password before saving
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create the user with the hashed password
+    const user = await this.userService.createUser({
+      ...createUserDto,
+      password: hashedPassword,
+    });
+
+    // Prepare the payload for JWT
+    const payload = { sub: user.id, email: user.email, role: user.role };
+    const accessToken = this.jwtService.sign(payload);
+
+    return { id: user.id, accessToken };
   }
 }
