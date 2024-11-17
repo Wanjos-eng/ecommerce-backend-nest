@@ -18,31 +18,23 @@ export class AuthController {
     return this.authService.register(createUserDto);
   }
 
-  // Login via Google
   @Get('google')
   @UseGuards(AuthGuard('google'))
-  async googleAuth() {
-    // Inicia o fluxo de autenticação com o Google
-  }
+  async googleAuth() {}
 
   @Get('google/redirect')
   @UseGuards(AuthGuard('google'))
   async googleAuthRedirect(@Req() req) {
-    const token = await this.authService.validateOAuthLogin(req.user);
-    return { accessToken: token };
+    return { accessToken: await this.authService.validateOAuthLogin(req.user) };
   }
 
-  // Login via GitHub
   @Get('github')
   @UseGuards(AuthGuard('github'))
-  async githubAuth() {
-    // Inicia o fluxo de autenticação com o GitHub
-  }
+  async githubAuth() {}
 
   @Get('github/redirect')
   @UseGuards(AuthGuard('github'))
   async githubAuthRedirect(@Req() req) {
-    const token = await this.authService.validateOAuthLogin(req.user);
-    return { accessToken: token };
+    return { accessToken: await this.authService.validateOAuthLogin(req.user) };
   }
 }

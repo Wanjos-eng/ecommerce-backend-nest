@@ -19,13 +19,14 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
-
+/*
   @UseGuards(JwtAuthGuard)
   @Get()
   @HttpCode(HttpStatus.OK)
   async findAll(): Promise<User[]> {
     return this.userService.findAll();
   }
+*/
 
   @UseGuards(JwtAuthGuard)
   @Get('me')

@@ -3,25 +3,21 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from './entities/user.entity';
-import { CreateUserDto, UpdateUserDto } from './dto/user.dto';
-import { LoginDto } from '../auth/dto/login.dto';
-import { JwtService } from '@nestjs/jwt';
-import { UserRole } from './dto/user.dto';
+import { CreateUserDto, UpdateUserDto, UserRole } from './dto/user.dto';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-    private readonly jwtService: JwtService,
   ) {}
 
-  // Método para buscar um usuário pelo email
+  // Buscar usuário pelo email
   async findByEmail(email: string): Promise<User | undefined> {
     return await this.userRepository.findOneBy({ email });
   }
 
-  // Método para encontrar um usuário por provedor e ID do provedor
+  // Buscar usuário por provedor e ID do provedor
   async findByProviderId(
     provider: string,
     providerId: string,
@@ -31,83 +27,29 @@ export class UserService {
     });
   }
 
-  // Método para criar um novo usuário via OAuth
-  async createOAuthUser(userData: any): Promise<User> {
-    const { name, email, provider, providerId } = userData;
-
-    // Verificar se o usuário já existe pelo email
-    let existingUser = await this.findByEmail(email);
-
-    // Se o usuário não existir, criar um novo usuário
-    if (!existingUser) {
-      existingUser = this.userRepository.create({
-        name,
-        email,
-        provider,
-        providerId,
-        role: UserRole.CUSTOMER, // Utilizando o enum UserRole
-        password: null, // Não há senha para o OAuth
-      });
-      await this.userRepository.save(existingUser);
-    }
-
-    return existingUser;
-  }
-
-  // Método de login
-  async login(loginDto: LoginDto): Promise<string> {
-    const { email, password } = loginDto;
-    const user = await this.findByEmail(email);
-
-    if (!user) {
-      throw new HttpException(
-        'Invalid email or password',
-        HttpStatus.UNAUTHORIZED,
-      );
-    }
-
-    const passwordMatch = await bcrypt.compare(password, user.password);
-    if (!passwordMatch) {
-      throw new HttpException(
-        'Invalid email or password',
-        HttpStatus.UNAUTHORIZED,
-      );
-    }
-
-    // Gerar o token JWT
-    const payload = { userId: user.id, email: user.email, role: user.role };
-    const token = this.jwtService.sign(payload);
-
-    return token;
-  }
-
-  // Método para criar um novo usuário
+  // Criar novo usuário (tradicional ou OAuth)
   async createUser(createUserDto: CreateUserDto): Promise<User> {
-    const { name, email, password } = createUserDto;
+    const { name, email, password, provider, providerId, role } = createUserDto;
 
     const existingUser = await this.findByEmail(email);
     if (existingUser) {
-      throw new HttpException('Email is already in use', HttpStatus.CONFLICT);
+      throw new HttpException('Email já está em uso', HttpStatus.CONFLICT);
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = password ? await bcrypt.hash(password, 10) : null;
     const user = this.userRepository.create({
       name,
       email,
       password: hashedPassword,
-      provider: null,
-      providerId: null,
-      role: UserRole.CUSTOMER, // Atribuindo role corretamente
+      provider: provider || null,
+      providerId: providerId || null,
+      role: role || UserRole.CUSTOMER,
     });
+
     return await this.userRepository.save(user);
   }
 
-  // Método para listar todos os usuários
-  async findAll(): Promise<User[]> {
-    return await this.userRepository.find();
-  }
-
-  // Método para buscar um usuário por ID
+  // Buscar usuário por ID
   async findOne(id: string): Promise<User> {
     const user = await this.userRepository.findOneBy({ id });
     if (!user) {
@@ -116,7 +58,7 @@ export class UserService {
     return user;
   }
 
-  // Método para atualizar um usuário
+  // Atualizar usuário
   async updateUser(id: string, updateUserDto: UpdateUserDto): Promise<User> {
     const user = await this.findOne(id);
 
@@ -128,7 +70,7 @@ export class UserService {
     return await this.userRepository.save(user);
   }
 
-  // Método para deletar um usuário
+  // Deletar usuário
   async deleteUser(id: string): Promise<{ message: string }> {
     const result = await this.userRepository.delete(id);
     if (result.affected === 0) {
