@@ -4,91 +4,109 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { UserService } from '../user/user.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { User } from '../user/entities/user.entity';
+import { UserRole } from '../user/dto/user.dto';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly userService: UserService,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
     private readonly jwtService: JwtService,
   ) {}
 
   /**
-   * Método de registro de usuário:
-   * - Recebe o DTO de registro (`RegisterDto`).
-   * - Verifica se o email já está em uso.
-   * - Faz o hash da senha e cria o usuário.
-   * - Retorna o ID do usuário criado.
+   * Método de registro de usuário.
    */
   async register(registerDto: RegisterDto): Promise<string> {
-    const { email, password } = registerDto;
+    const { email, password, name, role } = registerDto;
 
     // Verificar se o email já está em uso
-    const existingUser = await this.userService.findByEmail(email);
+    const existingUser = await this.userRepository.findOne({
+      where: { email },
+    });
     if (existingUser) {
       throw new BadRequestException('Email is already in use.');
     }
 
-    // Hash da senha
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Gerar o hash da senha
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    // Criar o usuário
-    const user = await this.userService.createUser({
-      ...registerDto,
+    // Usar o enum UserRole para definir o role
+    const userRole: UserRole = role
+      ? (role.toLowerCase() as UserRole)
+      : UserRole.CUSTOMER;
+
+    // Criar o novo usuário
+    const newUser = this.userRepository.create({
+      name,
+      email,
       password: hashedPassword,
+      role: userRole,
     });
 
-    return user.id;
+    // Salvar o usuário no banco de dados
+    const savedUser = await this.userRepository.save(newUser);
+
+    // Retornar o ID do usuário criado
+    return savedUser.id;
   }
 
   /**
-   * Método de login:
-   * - Recebe o DTO de login (`LoginDto`).
-   * - Busca o usuário pelo email.
-   * - Compara a senha informada com o hash armazenado.
-   * - Lança exceção se as credenciais forem inválidas.
-   * - Gera um token JWT e retorna.
+   * Método de login.
    */
   async login(loginDto: LoginDto): Promise<{ accessToken: string }> {
     const { email, password } = loginDto;
 
     // Buscar o usuário pelo email
-    const user = await this.userService.findByEmail(email);
-    if (!user || !(await bcrypt.compare(password, user.password))) {
+    const user = await this.userRepository.findOne({ where: { email } });
+    if (!user) {
+      throw new UnauthorizedException('Invalid email or password.');
+    }
+
+    // Comparar a senha usando bcrypt
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid email or password.');
     }
 
     // Criar o payload para o token JWT
     const payload = { sub: user.id, email: user.email, role: user.role };
-
-    // Retornar o token JWT
     return { accessToken: this.jwtService.sign(payload) };
   }
 
   /**
-   * Método para validar login via OAuth (Google, GitHub)
-   * - Verifica se o usuário já existe com base no `providerId`.
-   * - Se o usuário não existir, cria um novo.
-   * - Gera um token JWT para o usuário autenticado.
+   * Método para validar login via OAuth.
    */
   async validateOAuthLogin(userData: any): Promise<string> {
     const { provider, providerId, email, name } = userData;
 
-    // Verificar se o usuário já existe com base no providerId
-    let user = await this.userService.findByProviderId(provider, providerId);
+    // Buscar o usuário pelo providerId
+    let user = await this.userRepository.findOne({
+      where: {
+        provider,
+        providerId,
+      },
+    });
 
-    // Se o usuário não existir, criar um novo
+    // Criar um novo usuário se não existir
     if (!user) {
-      user = await this.userService.createUser({
+      user = this.userRepository.create({
         name,
         email,
         provider,
         providerId,
-        password: null, // Usuário OAuth não tem senha
+        password: null,
+        role: UserRole.CUSTOMER, // Usar o enum UserRole
       });
+
+      user = await this.userRepository.save(user);
     }
 
     // Criar o payload para o token JWT
