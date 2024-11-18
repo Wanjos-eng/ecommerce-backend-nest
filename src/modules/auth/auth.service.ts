@@ -67,4 +67,32 @@ export class AuthService {
     // Retornar o token JWT
     return { accessToken: this.jwtService.sign(payload) };
   }
+
+  /**
+   * Método para validar login via OAuth (Google, GitHub)
+   * - Verifica se o usuário já existe com base no `providerId`.
+   * - Se o usuário não existir, cria um novo.
+   * - Gera um token JWT para o usuário autenticado.
+   */
+  async validateOAuthLogin(userData: any): Promise<string> {
+    const { provider, providerId, email, name } = userData;
+
+    // Verificar se o usuário já existe com base no providerId
+    let user = await this.userService.findByProviderId(provider, providerId);
+
+    // Se o usuário não existir, criar um novo
+    if (!user) {
+      user = await this.userService.createUser({
+        name,
+        email,
+        provider,
+        providerId,
+        password: null, // Usuário OAuth não tem senha
+      });
+    }
+
+    // Criar o payload para o token JWT
+    const payload = { sub: user.id, email: user.email, role: user.role };
+    return this.jwtService.sign(payload);
+  }
 }

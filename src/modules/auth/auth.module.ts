@@ -3,7 +3,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
-import { UserService } from '../user/user.service';
+import { UserModule } from '../user/user.module';
 import { JwtAuthGuard } from './guards/jwt.auth.guard';
 import { GoogleStrategy } from './strategies/google.strategy';
 import { GitHubStrategy } from './strategies/github.strategy';
@@ -15,15 +15,10 @@ import { GitHubStrategy } from './strategies/github.strategy';
       secret: process.env.JWT_SECRET,
       signOptions: { expiresIn: '1h' },
     }),
+    UserModule, // Importando o UserModule
   ],
   controllers: [AuthController],
-  providers: [
-    AuthService,
-    UserService,
-    JwtAuthGuard,
-    GoogleStrategy,
-    GitHubStrategy,
-  ],
+  providers: [AuthService, JwtAuthGuard, GoogleStrategy, GitHubStrategy],
   exports: [AuthService, JwtAuthGuard],
 })
 export class AuthModule {}
