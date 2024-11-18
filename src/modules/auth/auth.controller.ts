@@ -25,10 +25,12 @@ export class AuthController {
   @Post('register')
   async register(@Body() createUserDto: CreateUserDto) {
     try {
-      const result = await this.authService.register(createUserDto);
-      return result;
+      const userId = await this.authService.register(createUserDto);
+      return {
+        message: 'Usuário registrado com sucesso.',
+        userId,
+      };
     } catch (error) {
-      // Handle exceptions and return appropriate HTTP status codes
       throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
     }
   }

@@ -1,10 +1,10 @@
 import { IsEmail, IsNotEmpty, MinLength } from 'class-validator';
 
 export class LoginDto {
-  @IsEmail({}, { message: 'Email must be a valid email address.' })
+  @IsEmail({}, { message: 'The email must be a valid email address.' })
   email: string;
 
-  @IsNotEmpty({ message: 'Password is required.' })
-  @MinLength(6, { message: 'Password must be at least 6 characters long.' })
+  @IsNotEmpty({ message: 'The password field is required.' })
+  @MinLength(6, { message: 'The password must be at least 6 characters long.' })
   password: string;
 }
