@@ -2,23 +2,28 @@ import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { AuthService } from './auth.service';
-import { JwtStrategy } from './strategies/jwt.strategy';
-import { GoogleStrategy } from './strategies/google.strategy';
-import { GithubStrategy } from './strategies/github.strategy';
 import { AuthController } from './auth.controller';
-import { UserModule } from '../user/user.module';
+import { UserService } from '../user/user.service';
+import { JwtAuthGuard } from './guards/jwt.auth.guard';
+import { GoogleStrategy } from './strategies/google.strategy';
+import { GitHubStrategy } from './strategies/github.strategy';
 
 @Module({
   imports: [
-    UserModule,
-    PassportModule.register({ defaultStrategy: 'jwt' }), // Configurado a estratégia padrão
+    PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({
-      secret: process.env.JWT_SECRET || 'defaultSecretKey',
+      secret: process.env.JWT_SECRET,
       signOptions: { expiresIn: '1h' },
     }),
   ],
-  providers: [AuthService, JwtStrategy, GoogleStrategy, GithubStrategy],
   controllers: [AuthController],
-  exports: [AuthService],
+  providers: [
+    AuthService,
+    UserService,
+    JwtAuthGuard,
+    GoogleStrategy,
+    GitHubStrategy,
+  ],
+  exports: [AuthService, JwtAuthGuard],
 })
 export class AuthModule {}
