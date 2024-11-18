@@ -22,8 +22,8 @@ export class GitHubStrategy extends PassportStrategy(Strategy, 'github') {
     accessToken: string,
     refreshToken: string,
     profile: any,
-    done: Function,
-  ): Promise<any> {
+    done: (error: any, user?: any) => void,
+  ): Promise<void> {
     const { id, username, emails } = profile;
     const user = {
       provider: 'github',
