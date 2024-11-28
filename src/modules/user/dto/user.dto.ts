@@ -1,6 +1,5 @@
 import {
   IsEmail,
-  IsNotEmpty,
   IsString,
   MinLength,
   IsOptional,
@@ -13,41 +12,7 @@ export enum UserRole {
   ADMIN = 'admin',
 }
 
-export class CreateUserDto {
-  @IsNotEmpty({ message: 'Name is required.' })
-  @IsString({ message: 'Name must be a string.' })
-  name: string;
-
-  @IsNotEmpty({ message: 'Email is required.' })
-  @IsEmail({}, { message: 'Email must be a valid email address.' })
-  email: string;
-
-  @IsNotEmpty({ message: 'Password is required.' })
-  @MinLength(6, { message: 'Password must be at least 6 characters long.' })
-  password: string;
-
-  @IsOptional()
-  @IsEnum(UserRole, { message: 'Role must be either customer or admin.' })
-  role?: UserRole;
-
-  @IsOptional()
-  @IsString({ message: 'Address must be a string.' })
-  address?: string;
-
-  @IsOptional()
-  @IsBoolean({ message: 'isTwoFactorEnabled must be a boolean.' })
-  isTwoFactorEnabled?: boolean;
-
-  // Propriedades para OAuth
-  @IsOptional()
-  @IsString({ message: 'Provider must be a string.' })
-  provider?: string;
-
-  @IsOptional()
-  @IsString({ message: 'Provider ID must be a string.' })
-  providerId?: string;
-}
-
+// DTO para atualizar usuário
 export class UpdateUserDto {
   @IsOptional()
   @IsString({ message: 'Name must be a string.' })
@@ -63,7 +28,7 @@ export class UpdateUserDto {
 
   @IsOptional()
   @IsEnum(UserRole, { message: 'Role must be either customer or admin.' })
-  role?: UserRole;
+  role?: UserRole; // Usado apenas em cenários administrativos
 
   @IsOptional()
   @IsString({ message: 'Address must be a string.' })
@@ -72,13 +37,11 @@ export class UpdateUserDto {
   @IsOptional()
   @IsBoolean({ message: 'isTwoFactorEnabled must be a boolean.' })
   isTwoFactorEnabled?: boolean;
+}
 
-  // Propriedades para OAuth
+// DTO para deletar usuário (caso necessário no futuro)
+export class DeleteUserDto {
   @IsOptional()
-  @IsString({ message: 'Provider must be a string.' })
-  provider?: string;
-
-  @IsOptional()
-  @IsString({ message: 'Provider ID must be a string.' })
-  providerId?: string;
+  @IsString({ message: 'Reason must be a string.' })
+  reason?: string;
 }
