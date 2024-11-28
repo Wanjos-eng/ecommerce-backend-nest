@@ -48,4 +48,18 @@ export class UserService {
       throw new BadRequestException('Failed to update user profile.');
     }
   }
+
+  //Excluir o perfil do usuário
+  async DeleteUserDto(userId: string): Promise<void> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('User not found.');
+    }
+
+    try {
+      await this.userRepository.remove(user);
+    } catch {
+      throw new BadRequestException('Failed to delete user.');
+    }
+  }
 }
