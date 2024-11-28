@@ -50,16 +50,15 @@ export class UserService {
   }
 
   //Excluir o perfil do usuário
-  async deleteUser(userId: string): Promise<void> {
+  async deleteUser(userId: string): Promise<{ message: string }> {
     const user = await this.userRepository.findOne({ where: { id: userId } });
+
     if (!user) {
-      throw new NotFoundException('User not found.');
+      throw new NotFoundException(`User not found.`);
     }
 
-    try {
-      await this.userRepository.remove(user);
-    } catch {
-      throw new BadRequestException('Failed to delete user.');
-    }
+    await this.userRepository.remove(user);
+
+    return { message: `User has been successfully deleted.` };
   }
 }

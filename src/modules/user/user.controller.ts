@@ -6,7 +6,6 @@ import {
   Body,
   Req,
   UseGuards,
-  Param,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt.auth.guard';
 import { UserService } from './user.service';
@@ -35,8 +34,8 @@ export class UserController {
   //Rota para excluir perfil do usuário
   @UseGuards(JwtAuthGuard)
   @Delete('me')
-  async deleteUser(@Param('id') id: string): Promise<{ message: string }> {
-    await this.userService.deleteUser(id);
-    return { message: `User with Id ${id} has been successfully deleted` };
+  async deleteUser(@Req() req: any): Promise<{ message: string }> {
+    const userId = req.user.sub; // ID do usuário vem do token
+    return await this.userService.deleteUser(userId);
   }
 }
