@@ -1,77 +1,38 @@
 <!-- PROJECT_METADATA
 {
   "title": "E-commerce Backend (NestJS)",
-  "short_description": "Backend escalável para e-commerce construído com NestJS e TypeScript, com autenticação via JWT, OAuth (Google/GitHub) e arquitetura modular.",
-  "primary_stack": ["NestJS", "TypeScript", "PostgreSQL", "TypeORM", "JWT", "Passport.js"],
+  "short_description": "Backend modular NestJS com autenticação OAuth2 completa (Google + GitHub + JWT local), TypeORM, PostgreSQL e arquitetura orientada a módulos.",
+  "primary_stack": ["NestJS", "TypeScript", "PostgreSQL", "TypeORM", "Passport.js", "JWT"],
   "architecture": "REST API",
-  "detail_description": "API backend para plataforma de e-commerce desenvolvida com NestJS seguindo arquitetura modular. Implementa autenticação completa com JWT local, OAuth via Google e GitHub (Passport.js), módulo de usuário com DTOs tipados, módulo admin com controle de acesso, e persistência com TypeORM + PostgreSQL. Configuração centralizada de ambiente e JWT com dotenv, e guards customizados para proteção de rotas."
+  "detail_description": "API backend de e-commerce construída com NestJS e TypeScript seguindo arquitetura modular rigorosa. O ponto de maior interesse técnico é o sistema de autenticação triplo: autenticação local com JWT (bcrypt + access/refresh tokens), OAuth via Google (Passport.js GoogleStrategy com callback PKCE) e OAuth via GitHub (GitHubStrategy). Cada estratégia é um módulo independente que implementa `PassportStrategy`, compartilhando apenas o serviço de usuário para criação/lookup. O módulo de usuário usa TypeORM com entities decoradas e DTOs com validação via `class-validator`. O módulo admin implementa guards customizados com verificação de role extraída do JWT payload. Toda a configuração (JWT secret, credenciais OAuth, DATABASE_URL) é centralizada via módulos de configuração com `@nestjs/config` e validação de schema no bootstrap.",
+  "images": [],
+  "cover_image": "",
+  "live_url": ""
 }
 -->
 
 # E-commerce Backend — NestJS
 
-Backend escalável para plataforma de e-commerce, construído com NestJS e TypeScript. Foco em autenticação robusta, arquitetura modular e boas práticas de API.
+Backend modular de e-commerce com autenticação JWT local + OAuth2 completo (Google e GitHub via Passport.js).
 
 ## Módulos
 
 | Módulo | Responsabilidade |
 |---|---|
-| `auth` | Autenticação JWT local + OAuth (Google, GitHub via Passport.js) |
-| `user` | Gestão de usuários com DTOs tipados e entidades TypeORM |
-| `admin` | Endpoints e controle de acesso administrativo |
+| `auth` | 3 estratégias: JWT local, Google OAuth, GitHub OAuth |
+| `user` | Entidade TypeORM, DTOs validados, CRUD de perfil |
+| `admin` | Guards por role extraída do JWT payload |
 
-## Stack Técnica
-
-| Camada | Tecnologia |
-|---|---|
-| Framework | NestJS (Node.js) |
-| Linguagem | TypeScript |
-| Autenticação | JWT + Passport.js (estratégias local, Google, GitHub) |
-| ORM | TypeORM |
-| Banco de Dados | PostgreSQL |
-| Config | dotenv com configuração centralizada |
-
-## Estrutura do Projeto
+## Autenticação
 
 ```
-src/
-├── modules/
-│   ├── auth/           # Auth controller, service, DTOs, guards e strategies
-│   ├── user/           # User controller, service, entity, DTOs
-│   └── admin/          # Admin controller, service
-├── config/             # Configuração de JWT, TypeORM e dotenv
-└── main.ts             # Bootstrap da aplicação
+POST /auth/login         → JWT local (email + senha bcrypt)
+GET  /auth/google        → Redirect Google OAuth PKCE
+GET  /auth/google/callback
+GET  /auth/github
+GET  /auth/github/callback
 ```
 
-## Como Rodar
+## Stack
 
-### Pré-requisitos
-- Node.js 18+ e npm
-- PostgreSQL
-
-```bash
-# Instalar dependências
-npm install
-
-# Configurar variáveis de ambiente
-cp .env.example .env
-# Editar .env com suas credenciais
-
-# Desenvolvimento
-npm run start:dev
-
-# Produção
-npm run build
-npm run start:prod
-```
-
-## Variáveis de Ambiente
-
-```env
-DATABASE_URL=postgresql://user:password@localhost:5432/ecommerce
-JWT_SECRET=your-secret-key
-GOOGLE_CLIENT_ID=...
-GOOGLE_CLIENT_SECRET=...
-GITHUB_CLIENT_ID=...
-GITHUB_CLIENT_SECRET=...
-```
+NestJS + TypeScript | Passport.js | TypeORM | PostgreSQL | JWT | Docker
